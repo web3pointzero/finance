@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="UTF-8" />
+<title>Canvas Test</title>
+</head>
+<body>
+<section>
+<div>
+<canvas id="canvas" width="360" height="210">
+This text is displayed if your browser
+does not support HTML5 Canvas.
+</canvas>
+</div>
+
+<script type="text/javascript">
+var canvas;
+var ctx;
+var j;
+var x = 0;
+var y = 210;
+var WIDTH = 360; /* temps in sayısı-1 * j*60 daki 80*/
+var HEIGHT = 210; /**/
+var temps = [40,65,85,28,92,95,49];
+
+function drawaxes(){
+ctx.strokeStyle = "black";
+/* y axis along the left edge of the canvas*/
+ctx.beginPath();
+ctx.moveTo(0,0);
+ctx.lineTo(0,210);
+ctx.stroke();
+/* x axis along the bottom edge of the canvas*/
+ctx.moveTo(0,210);
+ctx.lineTo(360,210);
+ctx.stroke();
+}
+
+function clear() {
+ctx.clearRect(0, 0, WIDTH, HEIGHT);
+}
+
+function init() {
+canvas = document.getElementById("canvas");
+ctx = canvas.getContext("2d");
+draw();
+}
+
+function plotdata(){
+ctx.strokeStyle = "black";
+ctx.beginPath();
+ctx.moveTo(0,HEIGHT-(temps[0]));
+j = 1;
+for (var i in temps){
+ctx.lineTo(j*60,HEIGHT-(temps[j]));
+ctx.stroke();
+j++;
+}
+}
+
+function draw() {
+clear();
+drawaxes();
+plotdata();
+}
+
+init();
+</script>
+
+</section>
+</body>
+</html>

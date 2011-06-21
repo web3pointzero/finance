@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<title>rsi</title>
+<meta charset="utf-8">
+</head>
+<body id="section-{% block sayfa %}{% endblock %}">
+
+<section>
+
+<div style="float:left;">
+
+ <canvas id="layer2"  width="620" height="350" 
+    style="position: absolute; left: 50; top: 50; z-index: 1; border: 1px solid #acacac; background-color: #fafafa;"></canvas>
+</div>
+
+<script type="text/javascript">
+var canvas;
+var canvas1;
+var ctx;
+var ctx1;
+var j;
+var k;
+var x = 0;
+var y = 601;
+var WIDTH = 620;
+var HEIGHT = 350;
+var max_value = 0;
+var min_value = 0;
+var width_extender = 2;
+
+var chart_close_height = 200;
+var chart_rsi_height = 100;
+var chart_close_width = 600;
+
+var close = new Array();
+var rsi = new Array();
+var datesArr = new Array();
+var dates = "";
+var old_date ="";
+
+{% for data in datalist %}
+close.push(parseFloat("{{ data.4 }}".replace(",",".")));
+rsi.push(parseFloat("{{ data.5 }}".replace(",",".")));
+datesArr.push("{{ data.0 }}");
+dates = datesArr.toString();
+{% endfor %}
+
+
+function drawaxes(){
+    /* axes for value graph */
+    ctx.strokeStyle = "black";
+    /* y axis along the left edge of the canvas*/
+    ctx.beginPath();
+    ctx.moveTo(0.5 +10,0 +10);
+    ctx.lineTo(0.5 +10,chart_close_height +10);
+    ctx.stroke();
+    /* x axis along the bottom edge of the canvas*/
+    ctx.moveTo(0.5 +10,chart_close_height+0.5 +10);
+    ctx.lineTo(chart_close_width+0.5 +10, chart_close_height+0.5 +10);
+    ctx.stroke();
+    
+    /* axes for rsi graph */
+    /* y axis along the left edge of the canvas*/
+    ctx.beginPath();
+    ctx.moveTo(0.5 +10,chart_close_height+30 +10);
+    ctx.lineTo(0.5 +10,chart_close_height+30+ chart_rsi_height +10);
+    ctx.stroke();
+    /* x axis along the bottom edge of the canvas*/
+    ctx.moveTo(0.5 +10,chart_close_height+30.5+chart_rsi_height +10);
+    ctx.lineTo(chart_close_width+0.5 +10,chart_close_height+30.5+chart_rsi_height +10);
+    ctx.stroke();
+
+    /* 70 line for rsi chart*/
+    ctx.strokeStyle = "#dddddd";
+    ctx.beginPath();
+    ctx.moveTo(0.5 +10,           chart_close_height+30.5+chart_rsi_height  -   (chart_rsi_height/100.0*70.0)  +10);
+    ctx.lineTo(chart_close_width+0.5 +10,       chart_close_height+30.5+chart_rsi_height  -   (chart_rsi_height/100.0*70.0) +10);
+    ctx.stroke();
+    
+
+    /* 30 line for rsi chart*/
+    ctx.strokeStyle = "#dddddd";
+    ctx.beginPath();
+    ctx.moveTo(0.5 +10,           chart_close_height+30.5+chart_rsi_height  -   (chart_rsi_height/100*30) +10 );
+    ctx.lineTo(chart_close_width+0.5 +10,       chart_close_height+30.5+chart_rsi_height  -   (chart_rsi_height/100.0*30.0) +10);
+    ctx.stroke();
+
+
+}
+
+function drawgrid(){
+    ctx.strokeStyle = "#dddddd";
+    ctx.lineWidth = 1.0;
+
+    for(i=50;i<chart_close_width+2;i+=50) {
+        ctx.beginPath();
+        ctx.moveTo(i+0.5 +10,0 +10);
+        ctx.lineTo(i+0.5 +10,chart_close_height-0.5 +10);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(i+0.5 +10,chart_close_height+30 +10);
+        ctx.lineTo(i+0.5 +10,chart_close_height-0.5+chart_rsi_height+30 +10);
+        ctx.stroke();
+
+    }
+}
+
+function clear() {
+    ctx.clearRect(0, 0, WIDTH, HEIGHT);
+}
+
+function calculate_chart() {
+    max_value = Math.max.apply( Math, close );
+    min_value = Math.min.apply( Math, close );
+    rsi_max_value = Math.max.apply( Math, rsi );
+    rsi_min_value = Math.min.apply( Math, rsi );
+
+    values_close_height = Math.round(max_value-min_value);
+    values_rsi_height = Math.round(rsi_max_value-rsi_min_value);
+
+    close_height_extender = (chart_close_height)/values_close_height;
+    rsi_height_extender = (chart_rsi_height)/values_rsi_height;
+
+    width_extender = chart_close_width/close.length;
+}
+
+function init() {
+    canvas = document.getElementById("layer2");
+    ctx = canvas.getContext("2d");
+
+    draw();
+}
+
+function plotclose(){
+
+    j = 1;
+
+    
+    for (var l in close){
+        temp_date = datesArr[j-1].substring(datesArr[j-1].search(/[A-Za-z][A-Za-z][A-Za-z]/),datesArr[j-1].search(/[A-Za-z][A-Za-z][A-Za-z]/)+6);
+
+        print_date = datesArr[j-1].substring(datesArr[j-1].search(/[A-Za-z][A-Za-z][A-Za-z]/)-2,datesArr[j-1].search(/[A-Za-z][A-Za-z][A-Za-z]/)+6);
+
+        if (temp_date != old_date) {
+            if(j!=1) {
+                ctx.strokeStyle = "#dddddd";
+                ctx.lineWidth = 1.0;
+                ctx.beginPath();
+                ctx.moveTo(Math.round((j-1)*width_extender)+10.5 ,0 +10);
+                ctx.lineTo(Math.round((j-1)*width_extender)+10.5,chart_close_height-0.5 +10);
+                ctx.stroke();
+            }
+
+            old_date = temp_date;
+            ctx.font = "normal 8px sans-serif";
+            ctx.fillText(print_date, 10+j*width_extender, 220);
+        }
+        
+        
+        ctx.strokeStyle = "#555555";
+        ctx.lineWidth = 1.5;
+
+
+        if(rsi[j-1] < 30.0) {
+            ctx.strokeStyle = "green";
+            ctx.lineWidth = 1.5;
+        }
+        
+        if(rsi[j-1] > 70.0) {
+            ctx.strokeStyle = "red";
+            ctx.lineWidth = 1.5;
+        }
+
+
+        ctx.beginPath();
+        ctx.moveTo((j-1)*width_extender+0.5 +10, (max_value - close[j-1])*close_height_extender +10 );
+        ctx.lineTo(j*width_extender+0.5 +10, (max_value - close[j])*close_height_extender +10 );
+        ctx.stroke();
+
+        ctx.strokeStyle = "#888888";
+        ctx.lineWidth = 1.0;
+        ctx.beginPath();
+        ctx.moveTo((j-1)*width_extender+0.5 +10, (100.5 - rsi[j-1])+chart_close_height+30 +10 );
+        ctx.lineTo(j*width_extender+0.5 +10, (100.5 - rsi[j])+chart_close_height+30 +10 );
+        ctx.stroke();
+
+
+        
+
+        j++;        
+
+    }
+
+}
+
+/*function legends() {
+    ctx.font = "normal 8px sans-serif";
+    ctx.fillText("aug 10", 10, 220);
+    ctx.fillText("sep 10", 60, 220);
+    ctx.fillText("oct 10", 110, 220);
+    ctx.fillText("nov 10", 160, 220);
+    ctx.fillText("dec 10", 210, 220);
+    ctx.fillText("jan 11", 260, 220);
+    ctx.fillText("feb 11", 310, 220);
+    ctx.fillText("mar 11", 360, 220);
+    ctx.fillText("apr 11", 410, 220);
+    ctx.fillText("may 11", 460, 220);
+    ctx.fillText("jun 11", 510, 220);
+    ctx.fillText("jul 11", 560, 220);
+    
+}*/
+
+function draw() {
+    clear();
+    calculate_chart();
+    drawaxes();
+    //drawgrid();
+    //legends();
+    plotclose();
+}
+
+init();
+</script>
+
+</section>
+
+<!--
+<table border=0>
+<tr><th>dates</th><th>opens</th><th>highs</th><th>lows</th><th>closes</th><th>rsi</th></tr>
+
+{% for data in datalist %}
+<tr><td>{{ data.0 }}</td><td>{{ data.1 }}</td><td>{{ data.2 }}</td><td>{{ data.3 }}</td><td>{{ data.4 }}</td><td>{{ data.5 }}</td></tr>
+{% endfor %}
+</table>
+-->
+
+</body>
+</html>
